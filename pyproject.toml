@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "14msv-solver"
+version = "0.1.0"
+description = "Solver for \"14 minesweeper variants\""
+authors = ["ikumyn1or0 <19ming3@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "3.11.9"
+numpy = "*"
+pandas = "*"
+jupyter = "*"
+notebook = "*"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
