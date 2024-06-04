@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import pprint
 
 
 class MinesweeperVariantsApp(ctk.CTk):
@@ -89,14 +90,14 @@ class MinesweeperVariantsApp(ctk.CTk):
     def display_field(self):
         """マインスイーパ部分の描画、self.cells["cell"]にセルを格納"""
         # フィールドの配置
-        self.field = ctk.CTkFrame(self)
-        self.field.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.field_frame = ctk.CTkFrame(self)
+        self.field_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         for i in range(self.field_size):
             for j in range(self.field_size):
                 # セルの配置
                 cell = ctk.CTkButton(
-                    self.field,
+                    self.field_frame,
                     text="", fg_color="black",
                     width=60, height=60,
                     border_color="yellow", border_width=0,
@@ -152,6 +153,7 @@ class MinesweeperVariantsApp(ctk.CTk):
         self.field_info_text.configure(text=self.generate_field_info_text())
 
         # セルのルールセレクタの状態を変更
+        self.cell_rule_scope_checkbox.configure(state=self.enable_change_cell())
         self.cell_rule_selector.configure(state=self.enable_change_cell())
         self.set_cell_rule_selector_value()
         self.cell_number_entry.configure(state=self.enable_change_cell())
@@ -160,74 +162,99 @@ class MinesweeperVariantsApp(ctk.CTk):
     def display_setting(self):
         """設定部分の画面を描画する関数"""
         # 設定の配置
-        self.setting = ctk.CTkFrame(self)
-        self.setting.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        self.setting_frame = ctk.CTkFrame(self)
+        self.setting_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        self.setting_frame.columnconfigure(0, weight=1)
+
+        # フレームの配置
+        self.field_size_frame = ctk.CTkFrame(self.setting_frame)
+        self.field_size_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.field_size_frame.columnconfigure(0, weight=1)
 
         # テキストの配置
-        self.change_field_size_text = ctk.CTkLabel(self.setting, text="Change Minesweeper Size")
+        self.change_field_size_text = ctk.CTkLabel(self.field_size_frame, text="Change Minesweeper Size")
         self.change_field_size_text.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
 
         # ドロップダウンメニューの配置
         self.field_size_selector = ctk.CTkComboBox(
-            self.setting,
+            self.field_size_frame,
             values=list(self.field_size_dict.keys()),
             command=self.change_field_size)
         self.field_size_selector.set(self.field_size_dict_inversed(self.field_size))
-        self.field_size_selector.grid(row=1, column=0, padx=10, pady=2, sticky="nsew")
+        self.field_size_selector.grid(row=1, column=0, padx=10, pady=5, sticky="nsew")
+
+        # フィールドの配置
+        self.field_rule_frame = ctk.CTkFrame(self.setting_frame)
+        self.field_rule_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+        self.field_rule_frame.columnconfigure(0, weight=1)
 
         # テキストの配置
-        self.change_field_rule_text = ctk.CTkLabel(self.setting, text="Change Field Rule")
-        self.change_field_rule_text.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+        self.change_field_rule_text = ctk.CTkLabel(self.field_rule_frame, text="Change Field Rule")
+        self.change_field_rule_text.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
 
         # ドロップダウンメニューの配置
         self.field_rule_selector = ctk.CTkComboBox(
-            self.setting,
+            self.field_rule_frame,
             values=list(self.field_rule_dict.keys()),
             command=self.change_field_rule)
         self.field_rule_selector.set(self.field_rule_dict_inversed(self.field_rule))
-        self.field_rule_selector.grid(row=3, column=0, padx=10, pady=2, sticky="nsew")
+        self.field_rule_selector.grid(row=1, column=0, padx=10, pady=5, sticky="nsew")
+
+        # フィールドの配置
+        self.cell_rule_num_frame = ctk.CTkFrame(self.setting_frame)
+        self.cell_rule_num_frame.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+        self.cell_rule_num_frame.columnconfigure(0, weight=1)
 
         # テキストの配置
-        self.change_cell_rule_text = ctk.CTkLabel(self.setting, text="Change Cell Rule")
-        self.change_cell_rule_text.grid(row=4, column=0, padx=10, pady=10, sticky="nsew")
+        self.change_cell_rule_text = ctk.CTkLabel(self.cell_rule_num_frame, text="Change Cell Rule")
+        self.change_cell_rule_text.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
+
+        # チェックボックスの配置
+        self.cell_rule_scope_checkbox = ctk.CTkCheckBox(
+            self.cell_rule_num_frame,
+            text="Change all cell")
+        self.cell_rule_scope_checkbox.grid(row=1, column=0, padx=10, pady=5, sticky="nsew")
 
         # ドロップダウンメニューの配置
         self.cell_rule_selector = ctk.CTkComboBox(
-            self.setting,
+            self.cell_rule_num_frame,
             values=list(self.cell_rule_dict.keys()),
             state=self.enable_change_cell(),
             command=self.change_cell_rule)
         self.set_cell_rule_selector_value()
-        self.cell_rule_selector.grid(row=5, column=0, padx=10, pady=10, sticky="nsew")
+        self.cell_rule_selector.grid(row=2, column=0, padx=10, pady=5, sticky="nsew")
 
         # テキストの配置
         self.change_cell_number_text = ctk.CTkLabel(
-            self.setting,
+            self.cell_rule_num_frame,
             text="Change Cell Number\n(For multiple, separate them with comma)")
-        self.change_cell_number_text.grid(row=6, column=0, padx=10, pady=10, sticky="nsew")
+        self.change_cell_number_text.grid(row=3, column=0, padx=10, pady=5, sticky="nsew")
 
         self.cell_number_entry = ctk.CTkEntry(
-            self.setting,
+            self.cell_rule_num_frame,
             state=self.enable_change_cell())
-        self.cell_number_entry.grid(row=7, column=0, padx=10, pady=2, sticky="nsew")
+        self.cell_number_entry.grid(row=4, column=0, padx=10, pady=5, sticky="nsew")
 
         self.cell_number_button = ctk.CTkButton(
-            self.setting,
+            self.cell_rule_num_frame,
             text="confirm cell number",
             state=self.enable_change_cell(),
             command=self.change_cell_number)
-        self.cell_number_button.grid(row=8, column=0, padx=10, pady=2)
+        self.cell_number_button.grid(row=5, column=0, padx=10, pady=5)
 
         # テキストの配置
         self.field_info_text = ctk.CTkLabel(
-            self.setting,
+            self.setting_frame,
             justify="left",
             text=self.generate_field_info_text())
-        self.field_info_text.grid(row=9, column=0, padx=10, pady=10, sticky="nsew")
+        self.field_info_text.grid(row=3, column=0, padx=10, pady=10, sticky="nsew")
 
-        # テキストの配置
-        pass
-        # [TODO]ヒント作成/solve機能があるボタンを作成する
+        # ボタンの配置
+        self.solve_button = ctk.CTkButton(
+            self.setting_frame,
+            text="find safe cell",
+            command=self.solve_field)
+        self.solve_button.grid(row=4, column=0, padx=10, pady=10, sticky="nsew")
 
     def change_field_size(self, key):
         """フィールドサイズが変更された際の挙動を管理する関数"""
@@ -289,10 +316,18 @@ class MinesweeperVariantsApp(ctk.CTk):
         """セルルールが変更された際の挙動を管理する関数"""
         if self.enable_change_cell() == "normal" and\
            self.cells[self.focused_cell_index]["state"] == "open":
-            self.cells[self.focused_cell_index]["cell_rule"] = self.cell_rule_dict.get(key, self.default_cell_rule)
-            text, fg_color = self.generate_cell_info_text_bgc(self.cells[self.focused_cell_index])
-            self.cells[self.focused_cell_index]["cell"].configure(
-                text=text, fg_color=fg_color)
+            if self.cell_rule_scope_checkbox.get() == 0:
+                self.cells[self.focused_cell_index]["cell_rule"] = self.cell_rule_dict.get(key, self.default_cell_rule)
+                text, fg_color = self.generate_cell_info_text_bgc(self.cells[self.focused_cell_index])
+                self.cells[self.focused_cell_index]["cell"].configure(
+                    text=text, fg_color=fg_color)
+            else:
+                for i in range(self.field_size):
+                    for j in range(self.field_size):
+                        self.cells[(i, j)]["cell_rule"] = self.cell_rule_dict.get(key, self.default_cell_rule)
+                        text, fg_color = self.generate_cell_info_text_bgc(self.cells[(i, j)])
+                        self.cells[(i, j)]["cell"].configure(
+                            text=text, fg_color=fg_color)
 
     def change_cell_number(self):
         """セルの数字が変更された際の挙動を管理する関数"""
@@ -306,6 +341,28 @@ class MinesweeperVariantsApp(ctk.CTk):
             text, fg_color = self.generate_cell_info_text_bgc(self.cells[self.focused_cell_index])
             self.cells[self.focused_cell_index]["cell"].configure(
                 text=text, fg_color=fg_color)
+
+    def solve_field(self):
+        field_dict = self.field_to_dict()
+        pprint.pprint(field_dict)
+
+    def field_to_dict(self):
+        field_dict = {}
+        field_dict["field_size"] = self.field_size
+        field_dict["num_mine"] = self.num_mine
+        field_dict["num_mine_found"] = self.num_mine_found
+        field_dict["field_rule"] = self.field_rule
+        cell_list = []
+        for i in range(self.field_size):
+            for j in range(self.field_size):
+                cell_dict = {}
+                cell_dict["position"] = (i, j)
+                cell_dict["state"] = self.cells[(i, j)]["state"]
+                cell_dict["cell_rule"] = self.cells[(i, j)]["cell_rule"]
+                cell_dict["numbers"] = self.cells[(i, j)]["numbers"]
+                cell_list.append(cell_dict)
+        field_dict["cells"] = cell_list
+        return field_dict
 
 
 if __name__ == "__main__":
