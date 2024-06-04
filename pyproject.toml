@@ -12,6 +12,8 @@ numpy = "*"
 pandas = "*"
 jupyter = "*"
 notebook = "*"
+tk = "*"
+customtkinter = "*"
 
 
 [build-system]
