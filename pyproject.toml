@@ -14,6 +14,7 @@ jupyter = "*"
 notebook = "*"
 tk = "*"
 customtkinter = "*"
+windows-curses = "*"
 
 
 [build-system]
