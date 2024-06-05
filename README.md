@@ -18,3 +18,10 @@ Alith GamesおよびArtless Gamesが開発したsteamゲーム、[14 minesweeper
 
 - tkinterを触ってみたい
 - 可読性を意識したコードを作成したい
+
+## 直近のTODO
+
+- minesweeperのソルバ機能を実装
+- 対応するバリアントを当てをつける
+- バリアントに対して数字が適切かチェックする機能を追加
+- 出力したjsonの整形(closeセルにはnumberは不要、など)
