@@ -1,5 +1,6 @@
 import customtkinter as ctk
 import json
+import mip
 
 
 class MinesweeperVariantsApp(ctk.CTk):
@@ -20,30 +21,57 @@ class MinesweeperVariantsApp(ctk.CTk):
         self.default_rule = "vanilla"
         # フィールド全体のルール
         self.field_rule_dict = {
-            "V": self.default_rule, "Q": "quad", "C": "connected", "T": "triplet",
-            "O": "outside", "D": "dual", "S": "snake", "B": "balance",
-            "T'": "triplet'", "D'": "battleship", "A": "anti-knight", "H": "horizontal",
-            "CD": "connected-dual", "CQ": "connected-quad", "CT": "connected-triplet",
-            "OQ": "outside-quad", "OT": "outside-triplet", "QT": "quad-triplet",
+            "V": self.default_rule,
+            "Q": "quad",
+            # "C": "connected",
+            # "T": "triplet",
+            # "O": "outside",
+            # "D": "dual",
+            # "S": "snake",
+            "B": "balance",
+            # "T'": "triplet'",
+            # "D'": "battleship",
+            # "A": "anti-knight",
+            # "H": "horizontal",
+            # "CD": "connected-dual",
+            # "CQ": "connected-quad",
+            # "CT": "connected-triplet",
+            # "OQ": "outside-quad",
+            # "OT": "outside-triplet",
+            # "QT": "quad-triplet",
         }
         self.default_field_rule = self.default_rule
 
         # セル個別のルール
         self.cell_rule_dict = {
             "?": "hidden",
-            "V": self.default_rule, "M": "multiple", "L": "liar", "W": "wall",
-            "N": "negation", "X": "cross", "P": "partition", "E": "eyesight",
-            "X'": "mini cross", "K": "knight", "W'": "longest wall", "E'": "eyesight'",
-            "LM": "liar-multiple", "MC": "multiple-cross", "MN": "multiple-negation",
-            "NX": "negation-cross", "UW": "unary-wall",
+            "V": self.default_rule,
+            # "M": "multiple",
+            "L": "liar",
+            # "W": "wall",
+            # "N": "negation",
+            # "X": "cross",
+            # "P": "partition",
+            # "E": "eyesight",
+            # "X'": "mini cross",
+            # "K": "knight",
+            # "W'": "longest wall",
+            # "E'": "eyesight'",
+            # "LM": "liar-multiple",
+            # "MC": "multiple-cross",
+            # "MN": "multiple-negation",
+            # "NX": "negation-cross",
+            # "UW": "unary-wall",
         }
         self.default_cell_rule = self.default_rule
 
         # セルの状態定義
-        self.cell_states = ("close", "open", "bomb")
+        self.cell_states = ("close", "open", "bomb", "safe", "danger")
         self.closed_cell = self.cell_states[0]
         self.opened_cell = self.cell_states[1]
         self.bomb_cell = self.cell_states[2]
+        self.safe_cell = self.cell_states[3]
+        self.danger_cell = self.cell_states[4]
         self.default_cell_state = self.closed_cell
 
         # フィールド・セルの初期化
@@ -166,8 +194,8 @@ class MinesweeperVariantsApp(ctk.CTk):
 
     def toggle_cell(self, pos):
         """セルを押した際の挙動を管理する関数"""
-        # セルがcloseならopenにし、focusする
-        if self.cells[pos]["state"] == self.closed_cell:
+        # セルがcloseかsafeならopenにし、focusする
+        if self.cells[pos]["state"] == self.closed_cell or self.cells[pos]["state"] == self.safe_cell:
             self.cells[pos]["state"] = self.opened_cell
             self.focused_cell_pos = pos
         elif self.cells[pos]["state"] == self.opened_cell:
@@ -178,6 +206,10 @@ class MinesweeperVariantsApp(ctk.CTk):
             # セルがopenかつfocusしていないなら、focusする
             else:
                 self.focused_cell_pos = pos
+        # セルがdangerなら、bombにする
+        elif self.cells[pos]["state"] == self.danger_cell:
+            self.cells[pos]["state"] = self.bomb_cell
+            self.focused_cell_pos = (-1, -1)
         # セルがそれ以外なら、closeにする
         else:
             self.cells[pos]["state"] = self.closed_cell
@@ -311,7 +343,7 @@ class MinesweeperVariantsApp(ctk.CTk):
         self.solve_button = ctk.CTkButton(
             self.field_info_frame,
             text="find safe cell",
-            command=self.solve_field)
+            command=self.find_safe_danger_cell)
         self.solve_button.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
         # 盤面保存ボタンの配置
@@ -383,8 +415,14 @@ class MinesweeperVariantsApp(ctk.CTk):
                 text = f"{cell_rule_text}\n{numbers_text}"
                 fg_color = "blue"
         elif state == self.bomb_cell:
-            text = "BOMB"
+            text = "💣"
             fg_color = "red"
+        elif state == self.safe_cell:
+            text = "!"
+            fg_color = "navy"
+        elif state == self.danger_cell:
+            text = "🚩"
+            fg_color = "maroon"
         else:
             text = ""
             fg_color = "black"
@@ -397,7 +435,7 @@ class MinesweeperVariantsApp(ctk.CTk):
     def change_cell_rule(self, key):
         """セルルールが変更された際の挙動を管理する関数"""
         if self.is_cell_focused() == "normal" and\
-           self.cells[self.focused_cell_pos]["state"] == "open":
+           self.cells[self.focused_cell_pos]["state"] == self.opened_cell:
             if self.cell_rule_scope_checkbox.get() == 0:
                 self.cells[self.focused_cell_pos]["cell_rule"] = self.cell_rule_dict.get(key, self.default_cell_rule)
                 text, fg_color, border_width = self.get_cell_text_fgc_bwidth(
@@ -420,14 +458,44 @@ class MinesweeperVariantsApp(ctk.CTk):
             if num.strip().isdigit():
                 cell_numbers.append(int(num))
         if self.is_cell_focused() == "normal" and\
-           self.cells[self.focused_cell_pos]["state"] == "open":
+           self.cells[self.focused_cell_pos]["state"] == self.opened_cell:
             self.cells[self.focused_cell_pos]["numbers"] = cell_numbers
-            text, fg_color = self.get_cell_text_fgc_bwidth(self.cells[self.focused_cell_pos])
+            text, fg_color, border_width = self.get_cell_text_fgc_bwidth(
+                self.cells[self.focused_cell_pos], self.focused_cell_pos)
             self.cells[self.focused_cell_pos]["cell"].configure(
-                text=text, fg_color=fg_color)
+                text=text, fg_color=fg_color, border_width=border_width)
 
-    def solve_field(self):
-        print("now solving...(eternally)")
+    def find_safe_danger_cell(self):
+        """safeもしくはdangerなセルを探索"""
+        field_dict = self.field_to_dict()
+        safe_cell_cnt = 0
+        danger_cell_cnt = 0
+        cells = field_dict["cells"]
+        # openでもbombでもないセルに対して順々に次の処理を実行
+        closed_cells = [cell for cell in field_dict["cells"] if cell["state"] not in [self.opened_cell, self.bomb_cell]].copy()
+        for closed_cell in closed_cells:
+            closed_cell_pos = tuple(closed_cell["pos"])
+            # セルがopenだと仮定してマインスイーパを解く
+            opened_status, opened_val = self.solve_hypothesized_field(cells, field_dict, closed_cell, hypothesized_status=self.opened_cell)
+            # セルがBOMBだと仮定してマインスイーパを解く
+            bomb_status, bomb_val = self.solve_hypothesized_field(cells, field_dict, closed_cell, hypothesized_status=self.bomb_cell)
+            # BOMBだと仮定した際に最適解が得られなければ、safe
+            if opened_status == mip.OptimizationStatus.OPTIMAL and bomb_status != mip.OptimizationStatus.OPTIMAL and opened_val == 0:
+                self.cells[closed_cell_pos]["state"] = self.safe_cell
+                safe_cell_cnt += 1
+            # safeだと仮定した際に最適解が得られなければ、danger
+            elif bomb_status == mip.OptimizationStatus.OPTIMAL and opened_status != mip.OptimizationStatus.OPTIMAL and bomb_val == 1:
+                self.cells[closed_cell_pos]["state"] = self.danger_cell
+                danger_cell_cnt += 1
+        print(f"{safe_cell_cnt} safe cells and {danger_cell_cnt} danger_cells found.")
+
+        # セルの描画
+        for i in range(self.field_size):
+            for j in range(self.field_size):
+                pos = (i, j)
+                text, fg_color, border_width = self.get_cell_text_fgc_bwidth(self.cells[pos], pos)
+                self.cells[pos]["cell"].configure(
+                    text=text, fg_color=fg_color, border_width=border_width)
 
     def save_field(self):
         """フィールド盤面をjsonに出力する関数"""
@@ -471,6 +539,87 @@ class MinesweeperVariantsApp(ctk.CTk):
                 cell_list.append(cell_dict)
         field_dict["cells"] = cell_list
         return field_dict
+
+    def solve_hypothesized_field(self, cells, field_dict, closed_cell, hypothesized_status):
+        """セルの状態に対して1つ仮定を加えたうえでマインスイーパを解く"""
+        close_cell_pos_i = closed_cell["pos"][0]
+        close_cell_pos_j = closed_cell["pos"][1]
+        # 仮定したセルを特定、セル(dict)を更新
+        hypothesized_cells = cells.copy()
+        for i, cell in enumerate(hypothesized_cells):
+            if cell["pos"][0] == close_cell_pos_i and\
+               cell["pos"][1] == close_cell_pos_j:
+                break
+        _ = hypothesized_cells.pop(i)
+        hypothesized_cell = {
+            "pos": [close_cell_pos_i, close_cell_pos_j],
+            "state": hypothesized_status,
+            "cell_rule": "hidden",
+        }
+        hypothesized_cells.append(hypothesized_cell)
+
+        # 仮定したセルでマインスイーパを解く
+        status, field = self.solve_field_of_(hypothesized_cells, field_dict)
+
+        return status, field[close_cell_pos_i][close_cell_pos_j]
+
+    def solve_field_of_(self, cells, field_dict):
+        """セルで表現されたマインスイーパをIPで解く"""
+        N = field_dict["field_size"]
+        M = field_dict["mine_total"]
+        field_rule = field_dict["field_rule"]
+
+        # モデルを作成
+        model = mip.Model()
+        model.verbose = 0
+
+        # 決定変数を定義(0:安全、1:地雷)
+        x = model.add_var_tensor((N, N), "x", var_type=mip.BINARY)
+        z_l = model.add_var_tensor((N, N), "z_l", var_type=mip.BINARY)
+
+        # 制約条件を作成
+        # 地雷数の制約
+        model += mip.xsum(mip.xsum(x[i][j] for j in range(N)) for i in range(N)) == M
+
+        # セルごとの制約
+        for cell in cells:
+            i = cell["pos"][0]
+            j = cell["pos"][1]
+            # 安全マスの条件
+            if cell["state"] == self.opened_cell:
+                model += x[i][j] == 0
+                # vanillaの条件
+                if cell["cell_rule"] == "vanilla":
+                    model += mip.xsum(
+                        mip.xsum(x[i][j] for j in range(max(0, j-1), min(N, j+2))) for i in range(max(0, i-1), min(N, i+2))
+                        ) == cell["numbers"][0]
+                # セル個別ルールの条件
+                elif cell["cell_rule"] == "liar":
+                    model += mip.xsum(
+                        mip.xsum(x[i][j] for j in range(max(0, j-1), min(N, j+2))) for i in range(max(0, i-1), min(N, i+2))
+                        ) == cell["numbers"][0]+(z_l[i][j]*2-1)
+                else:
+                    pass
+            # 地雷マスの条件
+            elif cell["state"] == self.bomb_cell:
+                model += x[i][j] == 1
+
+        # フィールドの制約
+        if field_rule == "vanilla":
+            pass
+        if field_rule == "quad":
+            for i in range(N-1):
+                for j in range(N-1):
+                    model += x[i][j] + x[i+1][j] + x[i][j+1] + x[i+1][j+1] >= 1
+        if field_rule == "balance":
+            for i in range(N):
+                model += mip.xsum(x[i][j] for j in range(N)) == M // N
+                model += mip.xsum(x[j][i] for j in range(N)) == M // N
+
+        # 求解
+        model.optimize()
+
+        return model.status, x.astype(float)
 
 
 if __name__ == "__main__":

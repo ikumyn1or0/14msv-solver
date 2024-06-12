@@ -15,6 +15,7 @@ notebook = "*"
 tk = "*"
 customtkinter = "*"
 windows-curses = "*"
+mip = "*"
 
 
 [build-system]

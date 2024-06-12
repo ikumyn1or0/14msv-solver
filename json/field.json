@@ -1,6 +1,6 @@
 {
-    "field_size": 8,
-    "mine_total": 24,
+    "field_size": 5,
+    "mine_total": 10,
     "mine_found": 1,
     "field_rule": "vanilla",
     "cells": [
@@ -9,8 +9,8 @@
                 0,
                 0
             ],
-            "state": "close",
-            "cell_rule": "vanilla",
+            "state": "open",
+            "cell_rule": "hidden",
             "numbers": [
                 0
             ]
@@ -20,10 +20,10 @@
                 0,
                 1
             ],
-            "state": "close",
+            "state": "open",
             "cell_rule": "vanilla",
             "numbers": [
-                0
+                3
             ]
         },
         {
@@ -42,10 +42,10 @@
                 0,
                 3
             ],
-            "state": "close",
+            "state": "open",
             "cell_rule": "vanilla",
             "numbers": [
-                0
+                2
             ]
         },
         {
@@ -53,43 +53,10 @@
                 0,
                 4
             ],
-            "state": "close",
+            "state": "open",
             "cell_rule": "vanilla",
             "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                0,
-                5
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                0,
-                6
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                0,
-                7
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
+                1
             ]
         },
         {
@@ -141,43 +108,10 @@
                 1,
                 4
             ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                1,
-                5
-            ],
             "state": "open",
             "cell_rule": "vanilla",
             "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                1,
-                6
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                1,
-                7
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
+                2
             ]
         },
         {
@@ -216,182 +150,6 @@
         {
             "pos": [
                 2,
-                3
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                2,
-                4
-            ],
-            "state": "open",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                2,
-                5
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                2,
-                6
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                2,
-                7
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                3,
-                0
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                3,
-                1
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                3,
-                2
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                3,
-                3
-            ],
-            "state": "open",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                3,
-                4
-            ],
-            "state": "open",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                3,
-                5
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                3,
-                6
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                3,
-                7
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                4,
-                0
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                4,
-                1
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                4,
-                2
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                4,
                 3
             ],
             "state": "bomb",
@@ -402,7 +160,7 @@
         },
         {
             "pos": [
-                4,
+                2,
                 4
             ],
             "state": "close",
@@ -413,40 +171,7 @@
         },
         {
             "pos": [
-                4,
-                5
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                4,
-                6
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                4,
-                7
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                5,
+                3,
                 0
             ],
             "state": "close",
@@ -457,7 +182,7 @@
         },
         {
             "pos": [
-                5,
+                3,
                 1
             ],
             "state": "close",
@@ -468,7 +193,7 @@
         },
         {
             "pos": [
-                5,
+                3,
                 2
             ],
             "state": "close",
@@ -479,7 +204,7 @@
         },
         {
             "pos": [
-                5,
+                3,
                 3
             ],
             "state": "close",
@@ -490,7 +215,7 @@
         },
         {
             "pos": [
-                5,
+                3,
                 4
             ],
             "state": "close",
@@ -501,40 +226,7 @@
         },
         {
             "pos": [
-                5,
-                5
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                5,
-                6
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                5,
-                7
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                6,
+                4,
                 0
             ],
             "state": "close",
@@ -545,7 +237,7 @@
         },
         {
             "pos": [
-                6,
+                4,
                 1
             ],
             "state": "close",
@@ -556,154 +248,33 @@
         },
         {
             "pos": [
-                6,
+                4,
                 2
             ],
-            "state": "close",
+            "state": "open",
             "cell_rule": "vanilla",
             "numbers": [
-                0
+                3
             ]
         },
         {
             "pos": [
-                6,
+                4,
                 3
             ],
-            "state": "close",
+            "state": "open",
             "cell_rule": "vanilla",
             "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                6,
-                4
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                6,
-                5
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                6,
-                6
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                6,
-                7
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                7,
-                0
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                7,
                 1
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
             ]
         },
         {
             "pos": [
-                7,
-                2
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                7,
-                3
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                7,
+                4,
                 4
             ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                7,
-                5
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                7,
-                6
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
-            "numbers": [
-                0
-            ]
-        },
-        {
-            "pos": [
-                7,
-                7
-            ],
-            "state": "close",
-            "cell_rule": "vanilla",
+            "state": "open",
+            "cell_rule": "hidden",
             "numbers": [
                 0
             ]
