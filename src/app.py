@@ -1,6 +1,58 @@
 import customtkinter as ctk
 import json
 import mip
+import pandas as pd
+import numpy as np
+
+
+def get_V_constraint(N, i, j):
+    matrix = pd.DataFrame(np.zeros((N, N), dtype=int))
+    matrix.loc[
+        max(0, i-1): min(N, i+1),
+        max(0, j-1): min(N, j+1)
+    ] = 1
+    matrix.loc[i, j] = 0
+    return matrix
+
+
+def get_M_constraint(N, i, j):
+    checkerboard = np.ones((N, N), dtype=int)
+    checkerboard[1::2, ::2] = 2
+    checkerboard[::2, 1::2] = 2
+    return pd.DataFrame(checkerboard)*get_V_constraint(N, i, j)
+
+
+def get_X_constraint(N, i, j):
+    matrix = pd.DataFrame(np.zeros((N, N), dtype=int))
+    matrix.loc[i, max(0, j-2): min(N, j+2)] = 1
+    matrix.loc[max(0, i-2): min(N, i+2), j] = 1
+    matrix.loc[i, j] = 0
+    return matrix
+
+
+def get_miniX_constraint(N, i, j):
+    matrix = pd.DataFrame(np.zeros((N, N), dtype=int))
+    matrix.loc[i, max(0, j-1): min(N, j+1)] = 1
+    matrix.loc[max(0, i-1): min(N, i+1), j] = 1
+    matrix.loc[i, j] = 0
+    return matrix
+
+
+def get_K_constraint(N, i, j):
+    matrix = pd.DataFrame(np.zeros((N, N), dtype=int))
+    moves = [(2, 1), (2, -1), (-2, -1), (-2, 1),
+             (1, 2), (1, -2), (-1, -2), (-1, 2)]
+    for move in moves:
+        if 0 <= i + move[0] < N and 0 <= j + move[1] < N:
+            matrix.loc[i + move[0], j + move[1]] = 1
+    return matrix
+
+
+def get_MX_constraint(N, i, j):
+    checkerboard = np.ones((N, N), dtype=int)
+    checkerboard[1::2, ::2] = 2
+    checkerboard[::2, 1::2] = 2
+    return pd.DataFrame(checkerboard)*get_X_constraint(N, i, j)
 
 
 class MinesweeperVariantsApp(ctk.CTk):
@@ -24,21 +76,21 @@ class MinesweeperVariantsApp(ctk.CTk):
             "V": self.default_rule,
             "Q": "quad",
             # "C": "connected",
-            # "T": "triplet",
+            "T": "triplet",
             # "O": "outside",
             # "D": "dual",
             # "S": "snake",
             "B": "balance",
             # "T'": "triplet'",
             # "D'": "battleship",
-            # "A": "anti-knight",
+            "A": "anti-knight",
             # "H": "horizontal",
             # "CD": "connected-dual",
             # "CQ": "connected-quad",
             # "CT": "connected-triplet",
             # "OQ": "outside-quad",
             # "OT": "outside-triplet",
-            # "QT": "quad-triplet",
+            "QT": "quad-triplet",
         }
         self.default_field_rule = self.default_rule
 
@@ -46,19 +98,19 @@ class MinesweeperVariantsApp(ctk.CTk):
         self.cell_rule_dict = {
             "?": "hidden",
             "V": self.default_rule,
-            # "M": "multiple",
+            "M": "multiple",
             "L": "liar",
             # "W": "wall",
             # "N": "negation",
-            # "X": "cross",
+            "X": "cross",
             # "P": "partition",
             # "E": "eyesight",
-            # "X'": "mini cross",
-            # "K": "knight",
+            "X'": "mini cross",
+            "K": "knight",
             # "W'": "longest wall",
             # "E'": "eyesight'",
-            # "LM": "liar-multiple",
-            # "MC": "multiple-cross",
+            "LM": "liar-multiple",
+            "MX": "multiple-cross",
             # "MN": "multiple-negation",
             # "NX": "negation-cross",
             # "UW": "unary-wall",
@@ -588,34 +640,98 @@ class MinesweeperVariantsApp(ctk.CTk):
             # 安全マスの条件
             if cell["state"] == self.opened_cell:
                 model += x[i][j] == 0
-                # vanillaの条件
-                if cell["cell_rule"] == "vanilla":
-                    model += mip.xsum(
-                        mip.xsum(x[i][j] for j in range(max(0, j-1), min(N, j+2))) for i in range(max(0, i-1), min(N, i+2))
-                        ) == cell["numbers"][0]
-                # セル個別ルールの条件
-                elif cell["cell_rule"] == "liar":
-                    model += mip.xsum(
-                        mip.xsum(x[i][j] for j in range(max(0, j-1), min(N, j+2))) for i in range(max(0, i-1), min(N, i+2))
-                        ) == cell["numbers"][0]+(z_l[i][j]*2-1)
-                else:
-                    pass
             # 地雷マスの条件
             elif cell["state"] == self.bomb_cell:
                 model += x[i][j] == 1
+            # 制約:V
+            if cell["cell_rule"] == "vanilla" and cell["state"] == self.opened_cell:
+                constraint = get_V_constraint(N, i, j)
+                model += mip.xsum(
+                    mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                    for i in range(N)) == cell["numbers"][0]
+            # 制約:M
+            elif cell["cell_rule"] == "multiple" and cell["state"] == self.opened_cell:
+                constraint = get_M_constraint(N, i, j)
+                model += mip.xsum(
+                    mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                    for i in range(N)) == cell["numbers"][0]
+            # 制約:L
+            elif cell["cell_rule"] == "liar" and cell["state"] == self.opened_cell:
+                constraint = get_V_constraint(N, i, j)
+                model += mip.xsum(
+                    mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                    for i in range(N)) + (z_l[i][j]*2-1) == cell["numbers"][0]
+            # 制約:X
+            elif cell["cell_rule"] == "cross" and cell["state"] == self.opened_cell:
+                constraint = get_X_constraint(N, i, j)
+                model += mip.xsum(
+                    mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                    for i in range(N)) == cell["numbers"][0]
+            # 制約:X'
+            elif cell["cell_rule"] == "mini cross" and cell["state"] == self.opened_cell:
+                constraint = get_miniX_constraint(N, i, j)
+                model += mip.xsum(
+                    mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                    for i in range(N)) == cell["numbers"][0]
+            # 制約:K
+            elif cell["cell_rule"] == "knight" and cell["state"] == self.opened_cell:
+                constraint = get_K_constraint(N, i, j)
+                model += mip.xsum(
+                    mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                    for i in range(N)) == cell["numbers"][0]
+            # 制約:LM
+            elif cell["cell_rule"] == "liar-multiple" and cell["state"] == self.opened_cell:
+                constraint = get_M_constraint(N, i, j)
+                model += mip.xsum(
+                    mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                    for i in range(N)) + (z_l[i][j]*2-1) == cell["numbers"][0]
+            # 制約:MX
+            elif cell["cell_rule"] == "multiple-cross" and cell["state"] == self.opened_cell:
+                constraint = get_MX_constraint(N, i, j)
+                model += mip.xsum(
+                    mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                    for i in range(N)) == cell["numbers"][0]
+            # その他の制約は追加予定
+            else:
+                pass
 
         # フィールドの制約
+        # 制約:V
         if field_rule == "vanilla":
             pass
-        if field_rule == "quad":
+        # 制約:Q, QT
+        elif field_rule in ["quad", "quad-triplet"]:
             for i in range(N-1):
                 for j in range(N-1):
                     model += x[i][j] + x[i+1][j] + x[i][j+1] + x[i+1][j+1] >= 1
-        if field_rule == "balance":
+        # 制約:T, QT
+        elif field_rule in ["triplet", "quad-triplet"]:
+            # 縦横の三目
+            for i in range(N):
+                for j in range(1, N-1):
+                    model += x[i][j-1] + x[i][j] + x[i][j+1] <= 2
+                    model += x[j-1][i] + x[j][i] + x[j+1][i] <= 2
+            # 斜めの三目
+            for i in range(1, N-1):
+                for j in range(1, N-1):
+                    model += x[i-1][j-1] + x[i][j] + x[i+1][j+1] <= 2
+                    model += x[i-1][j+1] + x[i][j] + x[i+1][j-1] <= 2
+        # 制約:B
+        elif field_rule == "balance":
             for i in range(N):
                 model += mip.xsum(x[i][j] for j in range(N)) == M // N
                 model += mip.xsum(x[j][i] for j in range(N)) == M // N
-
+        # 制約:A
+        elif field_rule == "anti-knight":
+            for i in range(N-1):
+                for j in range(N-2):
+                    model += x[i][j] + x[i+1][j+2] <= 1
+                    model += x[N-i-1][j] + x[N-i-2][j+2] <= 1
+                    model += x[j][i] + x[j+2][i+1] <= 1
+                    model += x[j][N-i-1] + x[j+2][N-i-2] <= 1
+        # その他の制約は追加予定
+        else:
+            pass
         # 求解
         model.optimize()
 
