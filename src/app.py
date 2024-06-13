@@ -78,7 +78,7 @@ class MinesweeperVariantsApp(ctk.CTk):
             # "C": "connected",
             "T": "triplet",
             # "O": "outside",
-            # "D": "dual",
+            "D": "dual",
             # "S": "snake",
             "B": "balance",
             # "T'": "triplet'",
@@ -225,10 +225,10 @@ class MinesweeperVariantsApp(ctk.CTk):
         for i in range(self.field_size):
             for j in range(self.field_size):
                 pos = (i, j)
-                text, fg_color, border_width = self.get_cell_text_fgc_bwidth(self.cells[pos], pos)
+                text, fg_color, border_width, text_color = self.get_cell_text_fgc_bwidth(self.cells[pos], pos)
                 cell = ctk.CTkButton(
                     self.field_frame,
-                    text=text, fg_color=fg_color,
+                    text=text, fg_color=fg_color, text_color=text_color,
                     width=50, height=50,
                     border_color="yellow", border_width=border_width,
                     hover=False,
@@ -271,10 +271,11 @@ class MinesweeperVariantsApp(ctk.CTk):
         for i in range(self.field_size):
             for j in range(self.field_size):
                 pos = (i, j)
-                text, fg_color, border_width = self.get_cell_text_fgc_bwidth(self.cells[pos], pos)
+                text, fg_color, border_width, text_color = self.get_cell_text_fgc_bwidth(self.cells[pos], pos)
                 self.cells[pos]["cell"].configure(
                     text=text,
                     fg_color=fg_color,
+                    text_color=text_color,
                     border_width=border_width
                 )
 
@@ -449,15 +450,36 @@ class MinesweeperVariantsApp(ctk.CTk):
         else:
             self.cell_rule_selector.set("")
 
+    def is_valid_cell_number(self, cell_rule, numbers):
+        one_num_rules = [
+            self.default_rule,
+            "hidden",
+            "multiple",
+            "liar",
+            "cross",
+            "mini cross",
+            "knight",
+            "liar-multiple",
+            "multiple-cross"]
+        if cell_rule in one_num_rules:
+            if len(numbers) == 1 and numbers[0] >= 0:
+                return True
+            else:
+                return False
+        else:
+            return True
+
     def get_cell_text_fgc_bwidth(self, cell, pos):
         """セルの情報(ルール・数字)を表示するためのテキストを生成する関数"""
         state = cell["state"]
         cell_rule = cell["cell_rule"]
         cell_rule_text = self.cell_rule_dict_v2k(cell_rule)
-        numbers_text = ",".join(map(str, cell["numbers"]))
+        numbers = cell["numbers"]
+        numbers_text = ",".join(map(str, numbers))
 
         text = ""
         fg_color = ""
+        text_color = "white"
         border_width = 0
         if state == self.opened_cell:
             if cell_rule == "hidden":
@@ -466,6 +488,7 @@ class MinesweeperVariantsApp(ctk.CTk):
             else:
                 text = f"{cell_rule_text}\n{numbers_text}"
                 fg_color = "blue"
+                text_color = "white" if self.is_valid_cell_number(cell_rule, numbers) else "orange"
         elif state == self.bomb_cell:
             text = "💣"
             fg_color = "red"
@@ -482,7 +505,7 @@ class MinesweeperVariantsApp(ctk.CTk):
             border_width = 2
         else:
             border_width = 0
-        return text, fg_color, border_width
+        return text, fg_color, border_width, text_color
 
     def change_cell_rule(self, key):
         """セルルールが変更された際の挙動を管理する関数"""
@@ -490,18 +513,18 @@ class MinesweeperVariantsApp(ctk.CTk):
            self.cells[self.focused_cell_pos]["state"] == self.opened_cell:
             if self.cell_rule_scope_checkbox.get() == 0:
                 self.cells[self.focused_cell_pos]["cell_rule"] = self.cell_rule_dict.get(key, self.default_cell_rule)
-                text, fg_color, border_width = self.get_cell_text_fgc_bwidth(
+                text, fg_color, border_width, text_color = self.get_cell_text_fgc_bwidth(
                     self.cells[self.focused_cell_pos], self.focused_cell_pos)
                 self.cells[self.focused_cell_pos]["cell"].configure(
-                    text=text, fg_color=fg_color, border_width=border_width)
+                    text=text, fg_color=fg_color, text_color=text_color, border_width=border_width)
             else:
                 for i in range(self.field_size):
                     for j in range(self.field_size):
                         pos = (i, j)
                         self.cells[pos]["cell_rule"] = self.cell_rule_dict.get(key, self.default_cell_rule)
-                        text, fg_color, border_width = self.get_cell_text_fgc_bwidth(self.cells[pos], pos)
+                        text, fg_color, border_width, text_color = self.get_cell_text_fgc_bwidth(self.cells[pos], pos)
                         self.cells[pos]["cell"].configure(
-                            text=text, fg_color=fg_color, border_width=border_width)
+                            text=text, fg_color=fg_color, text_color=text_color, border_width=border_width)
 
     def change_cell_number(self):
         """セルの数字が変更された際の挙動を管理する関数"""
@@ -512,10 +535,10 @@ class MinesweeperVariantsApp(ctk.CTk):
         if self.is_cell_focused() == "normal" and\
            self.cells[self.focused_cell_pos]["state"] == self.opened_cell:
             self.cells[self.focused_cell_pos]["numbers"] = cell_numbers
-            text, fg_color, border_width = self.get_cell_text_fgc_bwidth(
+            text, fg_color, border_width, text_color = self.get_cell_text_fgc_bwidth(
                 self.cells[self.focused_cell_pos], self.focused_cell_pos)
             self.cells[self.focused_cell_pos]["cell"].configure(
-                text=text, fg_color=fg_color, border_width=border_width)
+                text=text, fg_color=fg_color, text_color=text_color, border_width=border_width)
 
     def find_safe_danger_cell(self):
         """safeもしくはdangerなセルを探索"""
@@ -545,9 +568,9 @@ class MinesweeperVariantsApp(ctk.CTk):
         for i in range(self.field_size):
             for j in range(self.field_size):
                 pos = (i, j)
-                text, fg_color, border_width = self.get_cell_text_fgc_bwidth(self.cells[pos], pos)
+                text, fg_color, border_width, text_color = self.get_cell_text_fgc_bwidth(self.cells[pos], pos)
                 self.cells[pos]["cell"].configure(
-                    text=text, fg_color=fg_color, border_width=border_width)
+                    text=text, fg_color=fg_color, text_color=text_color, border_width=border_width)
 
     def save_field(self):
         """フィールド盤面をjsonに出力する関数"""
@@ -716,6 +739,16 @@ class MinesweeperVariantsApp(ctk.CTk):
                 for j in range(1, N-1):
                     model += x[i-1][j-1] + x[i][j] + x[i+1][j+1] <= 2
                     model += x[i-1][j+1] + x[i][j] + x[i+1][j-1] <= 2
+        elif field_rule == "dual":
+            for i in range(N):
+                for j in range(N):
+                    constraint = get_miniX_constraint(N, i, j)
+                    model += mip.xsum(
+                        mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                        for i in range(N)) - x[i][j] >= 0
+                    model += mip.xsum(
+                        mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                        for i in range(N)) + 3*x[i][j] <= 4
         # 制約:B
         elif field_rule == "balance":
             for i in range(N):
