@@ -22,6 +22,13 @@ def get_M_constraint(N, i, j):
     return pd.DataFrame(checkerboard)*get_V_constraint(N, i, j)
 
 
+def get_N_constraint(N, i, j):
+    checkerboard = np.ones((N, N), dtype=int)
+    checkerboard[1::2, ::2] = -1
+    checkerboard[::2, 1::2] = -1
+    return pd.DataFrame(checkerboard)*get_V_constraint(N, i, j)
+
+
 def get_X_constraint(N, i, j):
     matrix = pd.DataFrame(np.zeros((N, N), dtype=int))
     matrix.loc[i, max(0, j-2): min(N, j+2)] = 1
@@ -34,6 +41,13 @@ def get_miniX_constraint(N, i, j):
     matrix = pd.DataFrame(np.zeros((N, N), dtype=int))
     matrix.loc[i, max(0, j-1): min(N, j+1)] = 1
     matrix.loc[max(0, i-1): min(N, i+1), j] = 1
+    matrix.loc[i, j] = 0
+    return matrix
+
+
+def get_H_constraint(N, i, j):
+    matrix = pd.DataFrame(np.zeros((N, N), dtype=int))
+    matrix.loc[i, max(0, j-1): min(N, j+1)] = 1
     matrix.loc[i, j] = 0
     return matrix
 
@@ -84,7 +98,7 @@ class MinesweeperVariantsApp(ctk.CTk):
             # "T'": "triplet'",
             # "D'": "battleship",
             "A": "anti-knight",
-            # "H": "horizontal",
+            "H": "horizontal",
             # "CD": "connected-dual",
             # "CQ": "connected-quad",
             # "CT": "connected-triplet",
@@ -101,7 +115,7 @@ class MinesweeperVariantsApp(ctk.CTk):
             "M": "multiple",
             "L": "liar",
             # "W": "wall",
-            # "N": "negation",
+            "N": "negation",
             "X": "cross",
             # "P": "partition",
             # "E": "eyesight",
@@ -111,8 +125,8 @@ class MinesweeperVariantsApp(ctk.CTk):
             # "E'": "eyesight'",
             "LM": "liar-multiple",
             "MX": "multiple-cross",
-            # "MN": "multiple-negation",
-            # "NX": "negation-cross",
+            "MN": "multiple-negation",
+            "NX": "negation-cross",
             # "UW": "unary-wall",
         }
         self.default_cell_rule = self.default_rule
@@ -456,6 +470,7 @@ class MinesweeperVariantsApp(ctk.CTk):
             "hidden",
             "multiple",
             "liar",
+            "negation",
             "cross",
             "mini cross",
             "knight",
@@ -542,6 +557,7 @@ class MinesweeperVariantsApp(ctk.CTk):
 
     def find_safe_danger_cell(self):
         """safeもしくはdangerなセルを探索"""
+        print("solving...")
         field_dict = self.field_to_dict()
         safe_cell_cnt = 0
         danger_cell_cnt = 0
@@ -650,7 +666,10 @@ class MinesweeperVariantsApp(ctk.CTk):
 
         # 決定変数を定義(0:安全、1:地雷)
         x = model.add_var_tensor((N, N), "x", var_type=mip.BINARY)
+
+        # 制約で必要な変数
         z_l = model.add_var_tensor((N, N), "z_l", var_type=mip.BINARY)
+        z_n = model.add_var_tensor((N, N), "z_n", var_type=mip.BINARY)
 
         # 制約条件を作成
         # 地雷数の制約
@@ -673,19 +692,25 @@ class MinesweeperVariantsApp(ctk.CTk):
                     mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
                     for i in range(N)) == cell["numbers"][0]
             # 制約:M
-            elif cell["cell_rule"] == "multiple" and cell["state"] == self.opened_cell:
+            elif cell["cell_rule"] in ["multiple", "liar-multiple", "multiple-cross", "multiple-negation"] and cell["state"] == self.opened_cell:
                 constraint = get_M_constraint(N, i, j)
                 model += mip.xsum(
                     mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
                     for i in range(N)) == cell["numbers"][0]
             # 制約:L
-            elif cell["cell_rule"] == "liar" and cell["state"] == self.opened_cell:
+            elif cell["cell_rule"] in ["liar", "liar-multiple"] and cell["state"] == self.opened_cell:
                 constraint = get_V_constraint(N, i, j)
                 model += mip.xsum(
                     mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
                     for i in range(N)) + (z_l[i][j]*2-1) == cell["numbers"][0]
+            # 制約:N
+            elif cell["cell_rule"] in ["negation", "multiple-negation", "negation-cross"] and cell["state"] == self.opened_cell:
+                constraint = get_N_constraint(N, i, j)
+                model += mip.xsum(
+                    mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                    for i in range(N)) == cell["numbers"][0] * z_n[i][j] - cell["numbers"][0] * (1 - z_n[i][j])
             # 制約:X
-            elif cell["cell_rule"] == "cross" and cell["state"] == self.opened_cell:
+            elif cell["cell_rule"] in ["cross", "multiple-cross", "negation-cross"] and cell["state"] == self.opened_cell:
                 constraint = get_X_constraint(N, i, j)
                 model += mip.xsum(
                     mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
@@ -739,6 +764,7 @@ class MinesweeperVariantsApp(ctk.CTk):
                 for j in range(1, N-1):
                     model += x[i-1][j-1] + x[i][j] + x[i+1][j+1] <= 2
                     model += x[i-1][j+1] + x[i][j] + x[i+1][j-1] <= 2
+        # 制約:D
         elif field_rule == "dual":
             for i in range(N):
                 for j in range(N):
@@ -762,6 +788,13 @@ class MinesweeperVariantsApp(ctk.CTk):
                     model += x[N-i-1][j] + x[N-i-2][j+2] <= 1
                     model += x[j][i] + x[j+2][i+1] <= 1
                     model += x[j][N-i-1] + x[j+2][N-i-2] <= 1
+        elif field_rule == "horizontal":
+            for i in range(N):
+                for j in range(N):
+                    constraint = get_H_constraint(N, i, j)
+                    model += mip.xsum(
+                        mip.xsum(x[i][j]*constraint.iat[i, j] for j in range(N))
+                        for i in range(N)) - x[i][j] >= 0
         # その他の制約は追加予定
         else:
             pass
